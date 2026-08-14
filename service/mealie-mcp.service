@@ -1,0 +1,27 @@
+# systemd unit for the Mealie MCP server (runs on the Raspberry Pi).
+#
+# Install / update:
+#   sudo cp service/mealie-mcp.service /etc/systemd/system/mealie-mcp.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now mealie-mcp      # first time
+#   sudo systemctl restart mealie-mcp           # after code changes
+#
+# Secrets (Mealie API key + GitHub OAuth app) live in the EnvironmentFile below,
+# outside the repo and chmod 600 — see README.
+[Unit]
+Description=Mealie MCP server (FastMCP, HTTP on 127.0.0.1:8003)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=david
+WorkingDirectory=/home/david/exchange/mealie-mcp-server
+Environment=HOME=/home/david
+EnvironmentFile=/home/david/.config/mealie_mcp/env
+ExecStart=/home/david/.local/bin/uv run mealie-mcp-remote
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

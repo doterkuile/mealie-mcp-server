@@ -1,27 +1,29 @@
-# systemd unit for the Mealie MCP server (runs on the Raspberry Pi).
+# systemd *user* unit for the Mealie MCP server (runs on the Raspberry Pi).
 #
 # Install / update:
-#   sudo cp service/mealie-mcp.service /etc/systemd/system/mealie-mcp.service
-#   sudo systemctl daemon-reload
-#   sudo systemctl enable --now mealie-mcp      # first time
-#   sudo systemctl restart mealie-mcp           # after code changes
+#   mkdir -p ~/.config/systemd/user
+#   cp service/mealie-mcp.service ~/.config/systemd/user/mealie-mcp.service
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now mealie-mcp    # first time
+#   systemctl --user restart mealie-mcp         # after code changes
+#   loginctl enable-linger "$USER"              # start at boot without a login
 #
 # Secrets (Mealie API key + GitHub OAuth app) live in the EnvironmentFile below,
 # outside the repo and chmod 600 — see README.
 [Unit]
 Description=Mealie MCP server (FastMCP, HTTP on 127.0.0.1:8003)
-After=network-online.target docker.service
-Wants=network-online.target
 
 [Service]
 Type=simple
-User=david
-WorkingDirectory=/home/david/exchange/mealie-mcp-server
-Environment=HOME=/home/david
-EnvironmentFile=/home/david/.config/mealie_mcp/env
-ExecStart=/home/david/.local/bin/uv run mealie-mcp-remote
+WorkingDirectory=%h/exchange/mealie-mcp-server
+EnvironmentFile=%h/.config/mealie_mcp/env
+ExecStart=%h/.local/bin/uv run mealie-mcp-remote
 Restart=on-failure
 RestartSec=5
+# The Mealie client verifies its connection at startup, so at boot this unit may
+# lose the race against the docker container. Retry forever rather than giving up
+# after systemd's default burst limit.
+StartLimitIntervalSec=0
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

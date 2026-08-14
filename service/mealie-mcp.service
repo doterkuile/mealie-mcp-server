@@ -12,6 +12,10 @@
 # outside the repo and chmod 600 — see README.
 [Unit]
 Description=Mealie MCP server (FastMCP, HTTP on 127.0.0.1:8003)
+# The Mealie client verifies its connection at startup, so at boot this unit may
+# lose the race against the docker container. Retry forever rather than giving up
+# after systemd's default burst limit.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -20,10 +24,6 @@ EnvironmentFile=%h/.config/mealie_mcp/env
 ExecStart=%h/.local/bin/uv run mealie-mcp-remote
 Restart=on-failure
 RestartSec=5
-# The Mealie client verifies its connection at startup, so at boot this unit may
-# lose the race against the docker container. Retry forever rather than giving up
-# after systemd's default burst limit.
-StartLimitIntervalSec=0
 
 [Install]
 WantedBy=default.target
